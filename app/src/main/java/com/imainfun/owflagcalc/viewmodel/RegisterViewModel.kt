@@ -2,6 +2,7 @@ package com.imainfun.owflagcalc.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.imainfun.owflagcalc.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,6 +18,8 @@ data class RegisterUiState(
 )
 
 class RegisterViewModel : ViewModel() {
+    
+    private val userRepository by lazy { UserRepository() }
     
     private val _uiState = MutableStateFlow(RegisterUiState())
     val uiState: StateFlow<RegisterUiState> = _uiState.asStateFlow()
@@ -54,14 +57,23 @@ class RegisterViewModel : ViewModel() {
             try {
                 _uiState.value = currentState.copy(isLoading = true, errorMessage = null)
                 
-                // TODO: Implement Supabase registration logic here
-                // For now, simulate registration process
-                kotlinx.coroutines.delay(2000) // Simulate network call
-                
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    isRegistrationSuccessful = true
+                val result = userRepository.registerUser(
+                    email = currentState.email,
+                    password = currentState.password,
+                    name = currentState.name
                 )
+                
+                if (result.isSuccess) {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        isRegistrationSuccessful = true
+                    )
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = result.errorMessage ?: "Registration failed"
+                    )
+                }
                 
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
